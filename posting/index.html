@@ -206,7 +206,8 @@ function rowKey(s){ const k = s.prefix.replace(/^\d{4}\s+/, "").replace(/\d+$/, 
   try {
     const r = await fetch(BASE + "index.json?t=" + Date.now(), {cache:"no-store"});
     const idx = await r.json();
-    $("#updated").textContent = `안 올린 세트 ${idx.sets.length}개 · ${idx.updated}`;
+    const nf = idx.sets.filter(s => s.cards.length).length, nr = idx.sets.length - nf;
+    $("#updated").textContent = `안 올린 세트 ${nf}개${nr ? " · 릴스만 " + nr + "개" : ""} · ${idx.updated}`;
     const box = $("#list"); let cur = null, sec = null;
     for (const s of idx.sets){
       const k = rowKey(s);
