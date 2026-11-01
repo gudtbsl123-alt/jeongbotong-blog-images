@@ -39,7 +39,7 @@ button:focus-visible{outline:3px solid var(--tokyo);outline-offset:2px}
 button:disabled{opacity:.55;cursor:default}
 button.main{background:var(--accent);color:var(--bg);border-color:var(--accent);width:100%;font-size:17px;min-height:54px}
 button.main.reel{background:var(--bg);color:var(--ink);border-color:var(--c, var(--accent));margin-top:8px}
-img.strip.cover{max-height:220px;width:auto;margin:0 auto;display:block}
+img.strip.cover{height:240px;width:auto;max-width:100%;margin:0 auto;display:block;border-radius:10px;object-fit:cover}
 button.main.saved{background:var(--ok);border-color:var(--ok);color:#fff}
 .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .btns .wide{grid-column:1 / -1}
@@ -186,7 +186,7 @@ function setCard(s){
     el("div", {class:"head"},
       el("div", {}, el("div", {class:"name", text:s.prefix}), s.title ? el("div", {class:"title", text:s.title.replace(" / ", " ")}) : null),
       el("span", {class:"chip", text:n ? `${n}장` + (s.reel && s.reel.file ? " · 릴스" : "") : "릴스만"})),
-    s.thumb ? el("img", {class:"strip" + (n ? "" : " cover"), src:s.thumb, alt:`${s.prefix} ${n ? "카드 " + n + "장" : "릴스 표지"} 미리보기`}) : null,
+    (n ? s.thumb : s.reel && s.reel.cover) ? el("img", {class:"strip" + (n ? "" : " cover"), loading:"lazy", src:n ? s.thumb : `${BASE}${s.slug}/${s.reel.cover}?v=${s.v}`, alt:`${s.prefix} ${n ? "카드 " + n + "장" : "릴스 표지"} 미리보기`}) : null,
     n ? btn : null, n ? links : null, s.reel && s.reel.file ? reelButton(s, msg) : null, btns.children.length ? btns : null, msg);
 
   /* 화면 가까이 오면 미리 받아 두고, 다 받았으면 버튼 한 번에 공유 창이 열린다 */
