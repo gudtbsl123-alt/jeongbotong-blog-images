@@ -38,6 +38,8 @@ button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--lin
 button:focus-visible{outline:3px solid var(--tokyo);outline-offset:2px}
 button:disabled{opacity:.55;cursor:default}
 button.main{background:var(--accent);color:var(--bg);border-color:var(--accent);width:100%;font-size:17px;min-height:54px}
+button.main.reel{background:var(--bg);color:var(--ink);border-color:var(--c, var(--accent));margin-top:8px}
+img.strip.cover{max-height:220px;width:auto;margin:0 auto;display:block}
 button.main.saved{background:var(--ok);border-color:var(--ok);color:#fff}
 .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .btns .wide{grid-column:1 / -1}
@@ -55,7 +57,7 @@ button.main.saved{background:var(--ok);border-color:var(--ok);color:#fff}
     <h1>게시용 사진</h1>
     <p class="sub" id="updated">불러오는 중…</p>
   </header>
-  <div class="how"><p><b>사진 7장 앨범에 저장</b>을 누르고, 뜨는 공유 창에서 <b>이미지 7개 저장</b>을 누르면 사진 앱에 01번부터 순서대로 들어갑니다. 인스타에서 01부터 차례로 고르면 됩니다.</p></div>
+  <div class="how"><p><b>사진 7장 앨범에 저장</b>을 누르고, 뜨는 공유 창에서 <b>이미지 7개 저장</b>을 누르면 사진 앱에 01번부터 순서대로 들어갑니다. 인스타에서 01부터 차례로 고르면 됩니다.</p><p><b>릴스 앨범에 저장</b>은 한 번 눌러 받고, 한 번 더 눌러 공유 창에서 <b>항목 2개 저장</b>을 누르면 영상과 표지가 사진 앱에 들어갑니다. 피드를 이미 올린 세트는 <b>릴스만</b> 칸으로 나옵니다.</p></div>
   <section id="list" class="row" aria-label="안 올린 세트"></section>
 </main>
 <script>
@@ -99,6 +101,49 @@ async function copy(text, msg, label){
   catch (e){ msg.className = "msg err"; msg.textContent = "복사하지 못했습니다"; }
 }
 
+/* 릴스: 영상 + 표지를 한 번에 → 공유 창 '항목 2개 저장'(2026-11-01 운영자 '영상 릴스도 한 번에 앨범에'). 영상은 커서 미리 받지 않고, 누르면 받은 뒤 한 번 더 누르게 한다 */
+const reelCache = new Map();
+function loadReel(s){
+  if (!reelCache.has(s.slug)){
+    const r = s.reel, items = [[r.file, r.name, "video/mp4"]];
+    if (r.cover) items.push([r.cover, r.cover_name, "image/jpeg"]);
+    const p = Promise.all(items.map(async ([f, name, type]) => {
+      const res = await fetch(`${BASE}${s.slug}/${f}?v=${s.v}`, {cache:"force-cache"});
+      if (!res.ok) throw new Error(f + " " + res.status);
+      return new File([await res.blob()], name, {type});
+    }));
+    p.catch(() => reelCache.delete(s.slug));
+    reelCache.set(s.slug, p);
+  }
+  return reelCache.get(s.slug);
+}
+function reelButton(s, msg){
+  const r = s.reel, k = r.kind === "영상" ? "영상 릴스" : "릴스";
+  const label = `${k} 앨범에 저장${r.cover ? " (영상 + 표지)" : ""}`;
+  const btn = el("button", {type:"button", class:"main reel", text:label});
+  let ready = null;
+  btn.addEventListener("click", async () => {
+    if (!canShareFiles){ location.href = `${BASE}${s.slug}/${r.file}?v=${s.v}`; return; }
+    if (!ready){
+      btn.disabled = true; btn.textContent = `${k} 받는 중…`;
+      try { ready = await loadReel(s); }
+      catch (e){ btn.disabled = false; btn.textContent = label; msg.className = "msg err"; msg.textContent = "영상을 받지 못했습니다. 다시 눌러 주세요."; return; }
+      btn.disabled = false; btn.textContent = "준비됐습니다 — 눌러서 저장";
+      return;
+    }
+    try {
+      if (!navigator.canShare({files:ready})) throw Object.assign(new Error("files"), {name:"NotSupported"});
+      await navigator.share({files:ready});
+      btn.classList.add("saved"); btn.textContent = `✓ ${k} 저장 (다시 누르면 또 저장)`;
+      msg.className = "msg ok"; msg.textContent = `공유 창에서 '${ready.length > 1 ? "항목 " + ready.length + "개 저장" : "동영상 저장"}'을 고르셨다면 사진 앱에 들어갔습니다. 표지는 릴스 올릴 때 '표지 수정 → 카메라 롤에서 추가'로 고르면 됩니다.`;
+    } catch (e){
+      if (e && e.name === "AbortError") return;
+      msg.className = "msg err"; msg.textContent = "공유 창을 열지 못했습니다(" + (e && e.name || "오류") + "). 다시 눌러 주세요.";
+    }
+  });
+  return btn;
+}
+
 function setCard(s){
   const n = s.cards.length;
   const msg = el("p", {class:"msg", "aria-live":"polite"});
@@ -129,20 +174,20 @@ function setCard(s){
 
   const t = s.texts || {};
   const btns = el("div", {class:"btns"});
-  if (t["caption.txt"]) btns.append(el("button", {type:"button", text:"캡션 복사", onclick:() => copy(t["caption.txt"], msg, "캡션")}));
-  if (t["first_comment.txt"]) btns.append(el("button", {type:"button", text:"첫 댓글 복사", onclick:() => copy(t["first_comment.txt"], msg, "첫 댓글")}));
-  if (t["pinned_comment.txt"]) btns.append(el("button", {type:"button", text:"고정 댓글 복사", onclick:() => copy(t["pinned_comment.txt"], msg, "고정 댓글")}));
-  const rc = t["reel_caption_clip.txt"] || t["reel_caption_card.txt"];
+  if (t["caption.txt"] && n) btns.append(el("button", {type:"button", text:"캡션 복사", onclick:() => copy(t["caption.txt"], msg, "캡션")}));
+  if (t["first_comment.txt"] && n) btns.append(el("button", {type:"button", text:"첫 댓글 복사", onclick:() => copy(t["first_comment.txt"], msg, "첫 댓글")}));
+  if (t["pinned_comment.txt"] && n) btns.append(el("button", {type:"button", text:"고정 댓글 복사", onclick:() => copy(t["pinned_comment.txt"], msg, "고정 댓글")}));
+  const rc = (s.reel && s.reel.kind === "영상" && t["reel_caption_video.txt"]) || t["reel_caption_clip.txt"] || t["reel_caption_card.txt"];
   if (rc) btns.append(el("button", {type:"button", text:"릴스 캡션 복사", onclick:() => copy(rc, msg, "릴스 캡션")}));
-  if (t["threads.txt"]) btns.append(el("button", {type:"button", text:"Threads 글 복사", onclick:() => copy(t["threads.txt"], msg, "Threads 글")}));
+  if (t["threads.txt"] && n) btns.append(el("button", {type:"button", text:"Threads 글 복사", onclick:() => copy(t["threads.txt"], msg, "Threads 글")}));
   if (btns.children.length % 2) btns.lastElementChild.classList.add("wide");
 
   const card = el("article", {class:"set", style:`--c:${CITY[s.city] || "var(--prep)"}`},
     el("div", {class:"head"},
       el("div", {}, el("div", {class:"name", text:s.prefix}), s.title ? el("div", {class:"title", text:s.title.replace(" / ", " ")}) : null),
-      el("span", {class:"chip", text:`${n}장`})),
-    s.thumb ? el("img", {class:"strip", src:s.thumb, alt:`${s.prefix} 카드 ${n}장 미리보기`}) : null,
-    btn, links, btns.children.length ? btns : null, msg);
+      el("span", {class:"chip", text:n ? `${n}장` + (s.reel && s.reel.file ? " · 릴스" : "") : "릴스만"})),
+    s.thumb ? el("img", {class:"strip" + (n ? "" : " cover"), src:s.thumb, alt:`${s.prefix} ${n ? "카드 " + n + "장" : "릴스 표지"} 미리보기`}) : null,
+    n ? btn : null, n ? links : null, s.reel && s.reel.file ? reelButton(s, msg) : null, btns.children.length ? btns : null, msg);
 
   /* 화면 가까이 오면 미리 받아 두고, 다 받았으면 버튼 한 번에 공유 창이 열린다 */
   const io = new IntersectionObserver(es => {
