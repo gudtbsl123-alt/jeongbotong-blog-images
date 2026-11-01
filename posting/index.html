@@ -59,6 +59,8 @@ button.main.saved{background:var(--ok);border-color:var(--ok);color:#fff}
   <section id="list" class="row" aria-label="안 올린 세트"></section>
 </main>
 <script>
+/* 목록·사진은 GitHub 원본에서 바로(githack은 브랜치를 몇 분~몇 시간 묵혀 새 세트가 늦게 뜬다) */
+const BASE = "https://raw.githubusercontent.com/gudtbsl123-alt/jeongbotong-blog-images/main/posting/";
 const CITY = {"도쿄":"var(--tokyo)","오사카":"var(--osaka)","후쿠오카":"var(--fukuoka)"};
 const $ = s => document.querySelector(s);
 const canShareFiles = !!(navigator.canShare && navigator.share);
@@ -79,7 +81,7 @@ const cache = new Map();
 function load(s){
   if (!cache.has(s.slug)){
     const p = Promise.all(s.cards.map(async (f, i) => {
-      const r = await fetch(`${s.slug}/${f}?v=${s.v}`, {cache:"force-cache"});
+      const r = await fetch(`${BASE}${s.slug}/${f}?v=${s.v}`, {cache:"force-cache"});
       if (!r.ok) throw new Error(f + " " + r.status);
       const b = await r.blob();
       return new File([b], `${s.prefix} ${pad(i + 1)}.jpg`, {type:"image/jpeg"});
@@ -122,7 +124,7 @@ function setCard(s){
       msg.className = "msg err"; msg.textContent = "공유 창을 열지 못했습니다(" + (e && e.name || "오류") + "). 다시 눌러 주세요.";
     }
   });
-  const links = el("div", {class:"links"}, s.cards.map((f, i) => el("a", {href:`${s.slug}/${f}?v=${s.v}`, download:`${s.prefix} ${pad(i + 1)}.jpg`, text:pad(i + 1)})));
+  const links = el("div", {class:"links"}, s.cards.map((f, i) => el("a", {href:`${BASE}${s.slug}/${f}?v=${s.v}`, download:`${s.prefix} ${pad(i + 1)}.jpg`, text:pad(i + 1)})));
   links.hidden = canShareFiles;
 
   const t = s.texts || {};
@@ -157,7 +159,7 @@ function rowKey(s){ const k = s.prefix.replace(/^\d{4}\s+/, "").replace(/\d+$/, 
 
 (async () => {
   try {
-    const r = await fetch("index.json?t=" + Date.now(), {cache:"no-store"});
+    const r = await fetch(BASE + "index.json?t=" + Date.now(), {cache:"no-store"});
     const idx = await r.json();
     $("#updated").textContent = `안 올린 세트 ${idx.sets.length}개 · ${idx.updated}`;
     const box = $("#list"); let cur = null, sec = null;
