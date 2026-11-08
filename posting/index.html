@@ -179,6 +179,7 @@ function setCard(s){
   if (t["pinned_comment.txt"] && n) btns.append(el("button", {type:"button", text:"고정 댓글 복사", onclick:() => copy(t["pinned_comment.txt"], msg, "고정 댓글")}));
   const rc = (s.reel && s.reel.kind === "영상" && t["reel_caption_video.txt"]) || t["reel_caption_clip.txt"] || t["reel_caption_card.txt"];
   if (rc) btns.append(el("button", {type:"button", text:"릴스 캡션 복사", onclick:() => copy(rc, msg, "릴스 캡션")}));
+  if (t["reel_credit.txt"] && s.reel && s.reel.file) btns.append(el("button", {type:"button", text:"릴스 영상 크레딧 댓글 복사", onclick:() => copy(t["reel_credit.txt"], msg, "릴스 크레딧 댓글")}));   // 11-09 — CC BY 영상은 캡션 대신 릴스 댓글로 크레딧(L-130 캡션 출처 ✗)
   if (t["threads.txt"] && n) btns.append(el("button", {type:"button", text:"Threads 글 복사", onclick:() => copy(t["threads.txt"], msg, "Threads 글")}));
   if (btns.children.length % 2) btns.lastElementChild.classList.add("wide");
 
