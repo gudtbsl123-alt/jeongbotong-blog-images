@@ -28,11 +28,18 @@ footer a{color:#171717;font-weight:700}
 <h1>도시별 맛집 지도</h1>
 <p class="lead">인스타와 블로그에 소개한 집을 도시마다 구글맵 목록 하나로 모았어요. 새 글에 나온 가게도 계속 더해 가요.</p>
 
-<a class="city tk" href="https://maps.app.goo.gl/KZDSivCLZE1sRueN7"><svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 1C5.9 1 1 5.8 1 11.8 1 19.6 12 31 12 31s11-11.4 11-19.2C23 5.8 18.1 1 12 1z" fill="#fff"/><circle cx="12" cy="11.6" r="4.3" fill="#2B5BE8"/></svg><span class="t"><b>도쿄</b><small>TOKYO</small></span><span class="go">지도 열기 →</span></a>
-<a class="city os" href="https://maps.app.goo.gl/8U269pMayQE1Tp7T7"><svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 1C5.9 1 1 5.8 1 11.8 1 19.6 12 31 12 31s11-11.4 11-19.2C23 5.8 18.1 1 12 1z" fill="#fff"/><circle cx="12" cy="11.6" r="4.3" fill="#E8392E"/></svg><span class="t"><b>오사카</b><small>OSAKA</small></span><span class="go">지도 열기 →</span></a>
-<a class="city fk" href="https://maps.app.goo.gl/62ZCUqRDXnjNVazCA"><svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 1C5.9 1 1 5.8 1 11.8 1 19.6 12 31 12 31s11-11.4 11-19.2C23 5.8 18.1 1 12 1z" fill="#fff"/><circle cx="12" cy="11.6" r="4.3" fill="#12A27E"/></svg><span class="t"><b>후쿠오카</b><small>FUKUOKA</small></span><span class="go">지도 열기 →</span></a>
+<a class="city tk" data-k="tokyo" href="https://maps.app.goo.gl/KZDSivCLZE1sRueN7"><svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 1C5.9 1 1 5.8 1 11.8 1 19.6 12 31 12 31s11-11.4 11-19.2C23 5.8 18.1 1 12 1z" fill="#fff"/><circle cx="12" cy="11.6" r="4.3" fill="#2B5BE8"/></svg><span class="t"><b>도쿄</b><small>TOKYO</small></span><span class="go">지도 열기 →</span></a>
+<a class="city os" data-k="osaka" href="https://maps.app.goo.gl/8U269pMayQE1Tp7T7"><svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 1C5.9 1 1 5.8 1 11.8 1 19.6 12 31 12 31s11-11.4 11-19.2C23 5.8 18.1 1 12 1z" fill="#fff"/><circle cx="12" cy="11.6" r="4.3" fill="#E8392E"/></svg><span class="t"><b>오사카</b><small>OSAKA</small></span><span class="go">지도 열기 →</span></a>
+<a class="city fk" data-k="fukuoka" href="https://maps.app.goo.gl/62ZCUqRDXnjNVazCA"><svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 1C5.9 1 1 5.8 1 11.8 1 19.6 12 31 12 31s11-11.4 11-19.2C23 5.8 18.1 1 12 1z" fill="#fff"/><circle cx="12" cy="11.6" r="4.3" fill="#12A27E"/></svg><span class="t"><b>후쿠오카</b><small>FUKUOKA</small></span><span class="go">지도 열기 →</span></a>
 
 <div class="tip"><b>여행 전에 저장해 두세요</b>휴대폰에서 지도를 열고 목록을 저장하면, 구글맵 앱의 '저장됨'에서 언제든 다시 열 수 있어요. 가게를 누르면 바로 길찾기가 됩니다.</div>
 
 <footer>가게 이야기는 <a href="https://blog.naver.com/jeongbotong_japan">네이버 블로그</a>와 인스타 <a href="https://www.instagram.com/okawari_japan/">@okawari_japan</a>에서 보실 수 있어요.</footer>
+<script>
+/* 방문·클릭 수 — 무료 카운터 abacus(가입 없음). 숫자 보기: stats.html */
+(function(){var A="https://abacus.jasoncameron.dev/hit/okawari-maps/";
+function hit(k){try{fetch(A+k,{mode:"cors",keepalive:true}).catch(function(){})}catch(e){}}
+if(!/[?&]nocount/.test(location.search)){hit("visit");
+document.querySelectorAll("a[data-k]").forEach(function(a){a.addEventListener("click",function(){hit(a.dataset.k)})})}})();
+</script>
 </main></body></html>

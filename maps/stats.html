@@ -1,0 +1,18 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><meta name="color-scheme" content="light"><title>맛집 지도 숫자</title>
+<style>
+body{margin:0;background:#F3EEE3;color:#171717;font-family:Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+main{max-width:520px;margin:0 auto;padding:28px 16px 40px}h1{font-size:24px;margin:0 0 6px}p{color:#6b6457;font-size:14px;line-height:1.6;margin:0 0 20px}
+.row{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:14px;padding:16px 18px;margin:0 0 10px;font-size:17px;font-weight:700}
+.row b{font-size:26px}.row i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:middle}
+</style></head><body><main><h1>맛집 지도 숫자</h1>
+<p>지도 페이지가 열린 수와 도시 버튼을 누른 수예요. 같은 사람이 여러 번 열면 그만큼 셉니다. 2026-11-11부터.</p>
+<div class="row"><span>📄 지도 페이지 열림</span><b id="visit">…</b></div>
+<div class="row"><span><i style="background:#2B5BE8"></i>도쿄 지도 누름</span><b id="tokyo">…</b></div>
+<div class="row"><span><i style="background:#E8392E"></i>오사카 지도 누름</span><b id="osaka">…</b></div>
+<div class="row"><span><i style="background:#12A27E"></i>후쿠오카 지도 누름</span><b id="fukuoka">…</b></div>
+<p id="t"></p>
+<script>
+["visit","tokyo","osaka","fukuoka"].forEach(function(k){fetch("https://abacus.jasoncameron.dev/get/okawari-maps/"+k).then(function(r){return r.json()}).then(function(d){document.getElementById(k).textContent=(d.value||0).toLocaleString("ko-KR")}).catch(function(){document.getElementById(k).textContent="?"})});
+document.getElementById("t").textContent="불러온 시각 "+new Date().toLocaleString("ko-KR");
+</script></main></body></html>
