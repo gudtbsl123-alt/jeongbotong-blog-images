@@ -58,7 +58,7 @@ button.main.saved{background:var(--ok);border-color:var(--ok);color:#fff}
     <h1>게시용 사진</h1>
     <p class="sub" id="updated">불러오는 중…</p>
   </header>
-  <div class="how"><p><b>사진 7장 앨범에 저장</b>을 누르고, 뜨는 공유 창에서 <b>이미지 7개 저장</b>을 누르면 사진 앱에 01번부터 순서대로 들어갑니다. 인스타에서 01부터 차례로 고르면 됩니다.</p><p><b>릴스 앨범에 저장</b>은 한 번 눌러 받고, 한 번 더 눌러 공유 창에서 <b>항목 2개 저장</b>을 누르면 영상과 표지가 사진 앱에 들어갑니다. 피드를 이미 올린 세트는 <b>릴스만</b> 칸으로 나옵니다.</p><p><b>정리편</b>(도시 음식 3곳 한 번에)은 가게 3편을 다 올린 <b>다음 날 아침</b>에 릴스로 올리고, 공유 화면의 <b>프로필 격자에도 표시</b>는 꺼 주세요. 피드는 카드뉴스만, 릴스는 릴스 탭에만 둡니다.</p></div>
+  <div class="how"><p><b>사진 7장 앨범에 저장</b>을 누르고, 뜨는 공유 창에서 <b>이미지 7개 저장</b>을 누르면 사진 앱에 01번부터 순서대로 들어갑니다. 인스타에서 01부터 차례로 고르면 됩니다.</p><p><b>릴스 앨범에 저장</b>은 한 번 눌러 받고, 한 번 더 눌러 공유 창에서 <b>항목 2개 저장</b>을 누르면 영상과 표지가 사진 앱에 들어갑니다. 피드를 이미 올린 세트는 <b>릴스만</b> 칸으로 나옵니다.</p><p><b>정리편</b>(도시 음식 3곳 한 번에)은 가게 3편을 다 올린 <b>다음 날 아침</b>에 릴스로 올리고, 공유 화면의 <b>프로필 격자에도 표시</b>는 꺼 주세요(피드 격자는 카드뉴스만). 올린 직후 릴스 화면의 <b>종이비행기 → 스토리에 추가</b>로 스토리에도 올립니다. 스토리에서 누르면 그 릴스로 넘어가니 영상 파일을 스토리에 따로 올리지 않아도 됩니다. 투표·질문 스토리까지 순서는 <b>스토리 올리는 법 복사</b>에 있습니다.</p></div>
   <section id="list" class="row" aria-label="안 올린 세트"></section>
 </main>
 <script>
@@ -201,14 +201,14 @@ function setCard(s){
   const rc = (s.reel && s.reel.kind === "영상" && t["reel_caption_video.txt"]) || t["reel_caption_clip.txt"] || t["reel_caption_card.txt"];
   if (rc) btns.append(el("button", {type:"button", text:"릴스 캡션 복사", onclick:() => copy(rc, msg, "릴스 캡션")}));
   if (t["reel_credit.txt"] && s.reel && s.reel.file) btns.append(el("button", {type:"button", text:"릴스 영상 크레딧 댓글 복사", onclick:() => copy(t["reel_credit.txt"], msg, "릴스 크레딧 댓글")}));   // 11-09 — CC BY 영상은 캡션 대신 릴스 댓글로 크레딧(L-130 캡션 출처 ✗)
-  if (t["story_poll.txt"]) btns.append(el("button", {type:"button", text:"스토리 스티커 문구 복사", onclick:() => copy(t["story_poll.txt"], msg, "스토리 문구")}));
+  if (t["story_poll.txt"]) btns.append(el("button", {type:"button", text:"스토리 올리는 법 복사", onclick:() => copy(t["story_poll.txt"], msg, "스토리 올리는 법")}));
   if (t["threads.txt"] && n) btns.append(el("button", {type:"button", text:"Threads 글 복사", onclick:() => copy(t["threads.txt"], msg, "Threads 글")}));
   if (btns.children.length % 2) btns.lastElementChild.classList.add("wide");
 
   const card = el("article", {class:"set", style:`--c:${CITY[s.city] || "var(--prep)"}`},
     el("div", {class:"head"},
       el("div", {}, el("div", {class:"name", text:s.prefix}), s.title ? el("div", {class:"title", text:s.title.replace(" / ", " ")}) : null),
-      el("span", {class:"chip", text:n ? `${n}장` + (s.reel && s.reel.file ? " · 릴스" : "") : "릴스만"})),
+      el("span", {class:"chip", text:n ? `${n}장` + (s.reel && s.reel.file ? " · 릴스" : "") : ((s.stories || []).length ? "릴스 + 스토리" : "릴스만")})),   // L-159 정리편 = 릴스 탭 + 스토리(피드 격자만 끔)
     (n ? s.thumb : s.reel && s.reel.cover) ? el("img", {class:"strip" + (n ? "" : " cover"), loading:"lazy", src:n ? s.thumb : `${BASE}${s.slug}/${s.reel.cover}?v=${s.v}`, alt:`${s.prefix} ${n ? "카드 " + n + "장" : "릴스 표지"} 미리보기`}) : null,
     s.note ? el("p", {class:"note", text:s.note}) : null,
     n ? btn : null, n ? links : null, s.reel && s.reel.file ? reelButton(s, msg) : null, (s.stories || []).length ? storyButton(s, msg) : null, btns.children.length ? btns : null, msg);
