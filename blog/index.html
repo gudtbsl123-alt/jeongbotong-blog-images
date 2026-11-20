@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>오카와리 블로그 게시용</title>
+<style>
+/* 네이버 블로그 임시저장용 — 글마다: 제목(1안) 복사 · 글 전체 복사 · 사진 받기/복사 · 태그 복사. 목록은 blog/index.json */
+:root{
+  --bg:#F4F5F8; --panel:#FFFFFF; --ink:#16181D; --muted:#5F6573; --line:#DCDFE6; --accent:#16181D;
+  --tokyo:#2B5BE8; --osaka:#E8392E; --fukuoka:#12A27E; --etc:#AF52DE; --ok:#12A27E; --err:#C0352B;
+  --font:"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#111317;--panel:#1B1E24;--ink:#EEF0F4;--muted:#A3A9B6;--line:#2E333C;--accent:#EEF0F4;--err:#FF7B70;color-scheme:dark}
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+main{max-width:760px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:22px;font-weight:800;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.how{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+.how ol{margin:6px 0 0;padding-left:20px}
+.foods{display:flex;gap:8px;flex-wrap:wrap}
+.foods a{padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-decoration:none;font-weight:700;font-size:14px}
+.foods a[aria-current="true"]{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.food h2{font-size:18px;font-weight:800;margin:10px 0 8px}
+.city{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+.city h3{font-size:15px;font-weight:800;margin:4px 0 0;display:flex;align-items:center;gap:8px}
+.city h3 i{width:10px;height:10px;border-radius:2px;background:var(--c)}
+.post{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.name{font-weight:800;font-size:17px}
+.chip{font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--bg);color:var(--muted);white-space:nowrap}
+.row{display:grid;grid-template-columns:5.5em 1fr;gap:4px 10px;font-size:14px}
+.row dt{color:var(--muted);font-weight:700}
+.row dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button,.btn{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:9px 10px;font-size:14px;font-weight:700;min-height:42px;text-align:center;text-decoration:none;-webkit-tap-highlight-color:transparent}
+button.main{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+button.done{background:var(--ok);border-color:var(--ok);color:#fff}
+button:focus-visible{outline:3px solid var(--tokyo);outline-offset:2px}
+button:disabled{opacity:.55;cursor:default}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ph{border:1px solid var(--line);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
+.ph.cover{border:2px solid var(--c);}
+.ph img{width:100%;aspect-ratio:1/1;object-fit:contain;border-radius:6px;display:block;background:var(--panel)}
+.ph .cap{font-size:12px;color:var(--muted);line-height:1.35}
+.ph .cap b{color:var(--ink)}
+.badge{display:inline-block;background:var(--c);color:#fff;font-size:11.5px;font-weight:800;padding:1px 7px;border-radius:4px;margin-left:4px}
+.ph .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ph .two button{min-height:34px;font-size:13px;padding:4px}
+.msg{font-size:13px;margin:0;min-height:1.2em;color:var(--muted)}
+.msg.ok{color:var(--ok)} .msg.err{color:var(--err)}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+details pre{white-space:pre-wrap;font:inherit;font-size:13px;background:var(--bg);padding:10px;border-radius:8px;max-height:320px;overflow:auto}
+@media (max-width:480px){.btns{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>오카와리 블로그 게시용</h1>
+    <p class="sub" id="updated">목록 불러오는 중…</p>
+  </header>
+  <div class="how">
+    <b>네이버 블로그 PC 글쓰기에서, 글 하나씩</b>
+    <ol>
+      <li><b>제목 복사</b>(1안) → 제목 칸에 붙여넣기</li>
+      <li><b>글 전체 복사</b> → 본문에 붙여넣기. 사진 자리에 빨간 <b>📷 사진 N 자리</b> 줄이 생겨요.</li>
+      <li>사진 N을 <b>받기</b>(파일)나 <b>복사</b>로 가져와 빨간 줄 자리에 넣고 빨간 줄 지우기.</li>
+      <li><b>[구분선]</b> 줄 → 편집기 구분선. 주소만 있는 줄은 끝에서 Enter → 링크 카드.</li>
+      <li><b>대표</b> 표시된 사진(인스타 표지)을 대표 사진으로 지정.</li>
+      <li>발행 설정 창에서 <b>카테고리</b>·<b>태그</b>만 넣고 창 닫기 → <b>저장</b>(임시저장). 발행은 누르지 않아요.</li>
+    </ol>
+  </div>
+  <nav class="foods" id="foods" aria-label="음식 고르기"></nav>
+  <section id="list" aria-label="블로그 글 목록"></section>
+</main>
+<script>
+/* githack(브랜치 캐시가 늦다) 대신 GitHub 원본에서 바로 읽는다 — 이 페이지가 열린 브랜치를 그대로 쓴다 */
+const BASE = (() => {
+  const m = location.hostname.endsWith("githack.com") && location.pathname.match(/^\/([^/]+)\/([^/]+)\/([^/]+)\/(.*\/)?[^/]*$/);
+  return m ? `https://raw.githubusercontent.com/${m[1]}/${m[2]}/${m[3]}/${m[4] || ""}` : new URL("./", location.href).href;
+})();
+const CITY = {"도쿄":"var(--tokyo)","오사카":"var(--osaka)","후쿠오카":"var(--fukuoka)"};
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, "0");
+
+function el(tag, attrs = {}, ...kids){
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)){
+    if (k === "class") e.className = v; else if (k === "text") e.textContent = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+  }
+  kids.flat().forEach(k => k && e.append(k));
+  return e;
+}
+function say(msg, cls, text){ msg.className = "msg " + cls; msg.textContent = text; }
+function flash(btn, text){ const old = btn.textContent; btn.classList.add("done"); btn.textContent = text; setTimeout(() => { btn.classList.remove("done"); btn.textContent = old; }, 1800); }
+
+async function copyText(text, htmlText){
+  if (htmlText && window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+    try { await navigator.clipboard.write([new ClipboardItem({"text/plain": new Blob([text], {type:"text/plain"}), "text/html": new Blob([htmlText], {type:"text/html"})})]); return; } catch (e) {}
+  }
+  try { await navigator.clipboard.writeText(text); return; } catch (e) {}
+  const ta = el("textarea", {style:"position:fixed;opacity:0"}); ta.value = text; document.body.append(ta); ta.select();
+  const ok = document.execCommand("copy"); ta.remove(); if (!ok) throw new Error("copy");
+}
+const url = (p, ph) => `${BASE}${p.slug}/${ph.file}?v=${p.v}`;
+/* 파일 이름은 영문(slug) — 한글 이름은 일부 브라우저·자동화에서 'download'로 바뀐다 */
+const fname = (p, ph) => `${p.slug}-photo-${pad(ph.n)}${ph.cover ? "-cover" : ""}.jpg`;
+async function fetchBlob(p, ph){ const r = await fetch(url(p, ph), {cache:"force-cache"}); if (!r.ok) throw new Error(ph.file + " " + r.status); return r.blob(); }
+async function download(p, ph){
+  const b = await fetchBlob(p, ph), a = el("a", {href: URL.createObjectURL(b), download: fname(p, ph)});
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+/* 네이버 편집기는 클립보드 PNG를 받아 자기 서버에 올린다 — JPG를 PNG로 바꿔 넣는다 */
+async function copyImage(p, ph){
+  const b = await fetchBlob(p, ph), bmp = await createImageBitmap(b);
+  const c = el("canvas"); c.width = bmp.width; c.height = bmp.height; c.getContext("2d").drawImage(bmp, 0, 0);
+  const png = await new Promise(r => c.toBlob(r, "image/png"));
+  await navigator.clipboard.write([new ClipboardItem({"image/png": png})]);
+}
+
+function postCard(p){
+  const msg = el("p", {class:"msg", "aria-live":"polite"});
+  const cover = p.photos.find(x => x.cover);
+  const act = (label, fn, cls = "") => {
+    const b = el("button", {type:"button", class:cls, text:label});
+    b.addEventListener("click", async () => { try { await fn(b); } catch (e){ say(msg, "err", label + " 실패 — 다시 눌러 주세요"); } });
+    return b;
+  };
+  const btns = el("div", {class:"btns"},
+    act("제목 복사 (1안)", async b => { await copyText(p.title); flash(b, "제목 복사됨"); say(msg, "ok", "제목 칸에 붙여넣으세요."); }),
+    act("글 전체 복사", async b => { await copyText(p.body_text, p.body_html); flash(b, "글 복사됨"); say(msg, "ok", "본문에 붙여넣으세요. 빨간 '사진 N 자리' 줄에 사진을 넣으면 돼요."); }, "main"),
+    act("태그 복사", async b => { await copyText(p.tags); flash(b, "태그 복사됨"); say(msg, "ok", "발행 설정 창의 태그 칸에 붙여넣으세요."); }));
+  const all = act(`사진 ${p.photos.length}장 모두 받기`, async b => {
+    b.disabled = true;
+    for (const ph of p.photos){ b.textContent = `받는 중… ${ph.n}/${p.photos.length}`; await download(p, ph); await new Promise(r => setTimeout(r, 700)); }
+    b.disabled = false; b.textContent = `✓ 사진 ${p.photos.length}장 받음 (다시 누르면 또 받기)`;
+    say(msg, "ok", `다운로드 폴더에 ${p.slug}-photo-01부터 순서대로 들어갔어요. 끝에 -cover 붙은 파일이 대표 사진이에요.`);
+  });
+  const photos = el("div", {class:"photos"}, p.photos.map(ph => el("figure", {class:"ph" + (ph.cover ? " cover" : ""), style:"margin:0", id:`${p.slug}-p${ph.n}`},
+    el("img", {loading:"lazy", src:url(p, ph), alt:`${p.store} 사진 ${ph.n}`}),
+    el("figcaption", {class:"cap"}, el("b", {text:`사진 ${ph.n}`}), ph.cover ? el("span", {class:"badge", text:"대표"}) : null, el("br"), ph.label),
+    el("div", {class:"two"},
+      act("받기", async b => { await download(p, ph); flash(b, "받음"); }),
+      act("복사", async b => { await copyImage(p, ph); flash(b, "복사됨"); say(msg, "ok", `사진 ${ph.n} 복사됨 → 빨간 '사진 ${ph.n} 자리' 줄에서 Ctrl+V`); })))));
+
+  return el("article", {class:"post", id:p.slug, style:`--c:${CITY[p.city] || "var(--etc)"}`, "data-food":p.food},
+    el("div", {class:"head"},
+      el("div", {class:"name", text:`${"①②③④⑤"[p.num - 1] || p.num} ${p.store}`}),
+      el("span", {class:"chip", text:`${p.prefix} · 사진 ${p.photos.length}장`})),
+    el("dl", {class:"row"},
+      el("dt", {text:"제목(1안)"}), el("dd", {text:p.title}),
+      el("dt", {text:"카테고리"}), el("dd", {text:p.category}),
+      el("dt", {text:"대표 사진"}), el("dd", {}, el("a", {href:`#${p.slug}-p${cover.n}`, text:`사진 ${cover.n} (인스타 표지)`}))),
+    btns, all, photos,
+    el("details", {}, el("summary", {text:"본문 미리보기 (글자만)"}), el("pre", {text:p.body_text})),
+    msg);
+}
+
+(async () => {
+  try {
+    const r = await fetch(BASE + "index.json?t=" + Date.now(), {cache:"no-store"});
+    const idx = await r.json(), posts = idx.posts;
+    const foods = [...new Set(posts.map(p => p.food))];
+    $("#updated").textContent = `글 ${posts.length}편 · ${foods.length}가지 음식 · ${idx.updated}`;
+    const want = decodeURIComponent(location.hash.slice(1));
+    const pick = f => {
+      document.querySelectorAll(".food").forEach(s => s.hidden = f && s.dataset.food !== f);
+      document.querySelectorAll(".foods a").forEach(a => a.setAttribute("aria-current", String(a.dataset.food === (f || ""))));
+    };
+    $("#foods").append(el("a", {href:"#", "data-food":"", text:"전체", onclick:e => { e.preventDefault(); history.replaceState(null, "", "#"); pick(""); }}),
+      foods.map(f => el("a", {href:"#" + f, "data-food":f, text:f, onclick:e => { e.preventDefault(); history.replaceState(null, "", "#" + f); pick(f); }})));
+    const box = $("#list");
+    for (const f of foods){
+      const sec = el("section", {class:"food", "data-food":f}, el("h2", {text:f}));
+      for (const c of [...new Set(posts.filter(p => p.food === f).map(p => p.city))]){
+        sec.append(el("div", {class:"city", style:`--c:${CITY[c] || "var(--etc)"}`}, el("h3", {}, el("i"), `${c} ${f}`),
+          posts.filter(p => p.food === f && p.city === c).map(postCard)));
+      }
+      box.append(sec);
+    }
+    pick(foods.includes(want) ? want : "");
+    if (!posts.length) box.append(el("p", {class:"sub", text:"글이 없습니다."}));
+  } catch (e){
+    $("#updated").textContent = "목록을 불러오지 못했습니다. 새로 고침해 주세요.";
+  }
+})();
+</script>
+</body>
+</html>
