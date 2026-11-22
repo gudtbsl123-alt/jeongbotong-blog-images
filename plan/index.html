@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>오카와리 업로드 계획</title>
+<style>
+/* 업로드 계획 대시보드 — cardnews/templates/plan_board.py가 data.json을 만들고 이 파일을 공개 저장소 plan/에 복사한다.
+   도시 색은 카드 표지 띠와 같은 색(brand.css --city-*) */
+:root{
+  --bg:#F4F5F8; --panel:#FFFFFF; --ink:#16181D; --muted:#5F6573; --faint:#8C92A0; --line:#DCDFE6; --soft:#EEF0F4;
+  --tokyo:#2B5BE8; --osaka:#E8392E; --fukuoka:#12A27E; --prep:#AF52DE;
+  --ok:#12A27E; --plan:#2B5BE8; --warn:#D97706; --bad:#DC2626; --hold:#6B7280;
+  --today:#16181D;
+  --font:"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#111317;--panel:#1B1E24;--ink:#EEF0F4;--muted:#A3A9B6;--faint:#7D8494;--line:#2E333C;--soft:#242830;--today:#EEF0F4;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#111317;--panel:#1B1E24;--ink:#EEF0F4;--muted:#A3A9B6;--faint:#7D8494;--line:#2E333C;--soft:#242830;--today:#EEF0F4;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+main{max-width:980px;margin:0 auto;padding:20px 16px 56px;display:flex;flex-direction:column;gap:20px}
+h1{font-size:22px;font-weight:800;margin:0;letter-spacing:-.01em}
+h2{font-size:16px;font-weight:800;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+h2 small{font-weight:600;color:var(--muted);font-size:13px}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:10px}
+.sub{color:var(--muted);font-size:13px;margin:4px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--soft);color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.chip.on{background:var(--ok);color:#fff}
+.chip.off{background:var(--hold);color:#fff}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* 달력 */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.calhead h2{margin:0}
+.nav{display:flex;gap:6px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 12px;font-size:14px;font-weight:700;min-height:36px}
+button:focus-visible,.cell:focus-visible{outline:3px solid var(--plan);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dow{font-size:12px;font-weight:700;color:var(--muted);text-align:center;padding:2px 0}
+.dow.sun{color:var(--bad)}
+.cell{min-height:92px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:5px;display:flex;flex-direction:column;gap:3px;cursor:pointer;text-align:left;font:inherit;color:inherit;min-width:0}
+.cell.out{opacity:.38}
+.cell.today{border:2px solid var(--today)}
+.cell.sel{box-shadow:0 0 0 3px var(--plan)}
+.cell .d{font-size:12px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.cell .d em{font-style:normal;font-weight:700;color:var(--faint);font-size:11px}
+.cell.sunday .d{color:var(--bad)}
+.bar{border-radius:6px;padding:2px 5px;font-size:11px;font-weight:700;color:#fff;background:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:3px;align-items:center}
+.bar.ghost{background:transparent;color:var(--c);border:1.5px dashed var(--c)}
+.bar .n{margin-left:auto;font-variant-numeric:tabular-nums;opacity:.95}
+.dots{display:flex;gap:2px;flex-wrap:wrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--s)}
+@media (max-width:640px){
+  .cell{min-height:64px;padding:4px}
+  .bar{font-size:10px;padding:1px 4px}
+  .bar .t{display:none}
+}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--s);margin-right:4px;vertical-align:-1px}
+
+/* 하루 목록 */
+.day{display:flex;flex-direction:column;gap:8px}
+.dayhead{font-weight:800;font-size:15px;display:flex;align-items:baseline;gap:8px;margin-top:4px}
+.dayhead small{color:var(--muted);font-weight:600;font-size:12px}
+.item{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:8px 10px}
+.item .tm{font-weight:800;font-variant-numeric:tabular-nums;font-size:14px}
+.item .tm span{display:block;font-size:11px;font-weight:700;color:var(--muted)}
+.item .ttl{font-weight:700;font-size:14px;line-height:1.35;overflow-wrap:anywhere}
+.item .meta{font-size:12px;color:var(--muted);margin-top:2px;display:flex;flex-wrap:wrap;gap:4px 8px}
+.item .meta a{color:var(--plan);font-weight:700;text-decoration:none}
+.st{font-size:12px;font-weight:800;padding:3px 8px;border-radius:99px;color:#fff;background:var(--s);white-space:nowrap}
+.empty{color:var(--muted);font-size:14px;padding:6px 2px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+ul.list li{border-left:4px solid var(--c,var(--line));padding:4px 0 4px 10px;font-size:14px}
+ul.list li small{display:block;color:var(--muted);font-size:12px}
+.warn li{--c:var(--warn)}
+.foot{color:var(--faint);font-size:12px;text-align:center}
+.err{background:var(--bad);color:#fff;border-radius:10px;padding:10px 12px;font-size:14px;display:none}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div>
+      <h1>오카와리 업로드 계획</h1>
+      <p class="sub" id="updated">불러오는 중…</p>
+    </div>
+    <div class="chips" id="autochips"></div>
+  </div>
+  <div class="err" id="err"></div>
+
+  <div class="stats" id="stats"></div>
+
+  <section class="panel">
+    <div class="calhead">
+      <h2 id="mtitle">달력</h2>
+      <div class="nav">
+        <button id="prev" aria-label="지난달">‹</button>
+        <button id="thism">이번 달</button>
+        <button id="next" aria-label="다음 달">›</button>
+      </div>
+    </div>
+    <div class="grid" id="cal"></div>
+    <div class="legend">
+      <span><i style="--s:var(--ok)"></i>게시됨</span>
+      <span><i style="--s:var(--plan)"></i>예약(자동 게시)</span>
+      <span><i style="--s:var(--warn)"></i>시각 지남 · 결과 기다림</span>
+      <span><i style="--s:var(--bad)"></i>놓침·실패</span>
+      <span><i style="--s:var(--hold)"></i>보류</span>
+      <span>· 칸 색 = 도시(도쿄 파랑 · 오사카 빨강 · 후쿠오카 초록 · 여행준비 보라)</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 id="daytitle">날짜를 누르면 그날 올라가는 것이 보입니다</h2>
+    <div class="day" id="daylist"></div>
+  </section>
+
+  <section class="panel">
+    <h2>앞으로 7일 <small>오늘부터</small></h2>
+    <div class="day" id="upcoming"></div>
+  </section>
+
+  <div class="two">
+    <section class="panel">
+      <h2>준비 완료 · 날짜 미정 <small>게시용 사진 페이지에 있고 예약 줄이 없음</small></h2>
+      <ul class="list" id="ready"></ul>
+    </section>
+    <section class="panel">
+      <h2>다음에 만들 줄</h2>
+      <ul class="list" id="nextrows"></ul>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="panel">
+      <h2>운영자 차례 <small>업무 현황판</small></h2>
+      <ul class="list" id="todo"></ul>
+    </section>
+    <section class="panel">
+      <h2>확인할 것 <small>자동 점검</small></h2>
+      <ul class="list warn" id="warnings"></ul>
+    </section>
+  </div>
+
+  <p class="foot" id="foot"></p>
+</main>
+<script>
+(function(){
+  'use strict';
+  var RAW = 'https://raw.githubusercontent.com/gudtbsl123-alt/jeongbotong-blog-images/main/plan/data.json';
+  var POSTING = 'https://raw.githack.com/gudtbsl123-alt/jeongbotong-blog-images/main/posting/index.html';
+  var CITYC = {'도쿄':'var(--tokyo)','오사카':'var(--osaka)','후쿠오카':'var(--fukuoka)'};
+  var ST = {
+    posted:{t:'게시됨',c:'var(--ok)'}, planned:{t:'예약',c:'var(--plan)'}, overdue:{t:'결과 기다림',c:'var(--warn)'},
+    missed:{t:'놓침',c:'var(--bad)'}, failed:{t:'실패',c:'var(--bad)'}, held:{t:'보류',c:'var(--hold)'}
+  };
+  var KIND = {feed:'피드', reel:'릴스', roundup:'정리편'};
+  var DOW = ['일','월','화','수','목','금','토'];
+  var data = null, view = null, sel = null;
+
+  function $(id){ return document.getElementById(id); }
+  function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function kstToday(){
+    var d = new Date(Date.now() + 9*3600*1000);
+    return d.toISOString().slice(0,10);
+  }
+  function ymd(y,m,d){ return y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
+  function parse(s){ var p = s.split('-'); return new Date(Date.UTC(+p[0], +p[1]-1, +p[2])); }
+  function addDays(s, n){ var d = parse(s); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+  function dowOf(s){ return parse(s).getUTCDay(); }
+  function setOf(slug){ return (data.sets && data.sets[slug]) || {}; }
+  function colorOf(s){ return CITYC[s.city] || 'var(--prep)'; }
+  function rowName(s, slug){
+    if (!s.city && !s.food) return '여행준비';
+    var n = (s.city || '') + ' ' + (s.food || '');
+    if (s.round > 1) n += ' ' + s.round + '탄';
+    return n.trim() || slug;
+  }
+
+  function byDate(){
+    var m = {};
+    (data.events || []).forEach(function(e){ (m[e.date] = m[e.date] || []).push(e); });
+    return m;
+  }
+
+  // 하루 요약: 같은 줄(도시·음식·회차)끼리 묶어 막대 하나
+  function groups(evs){
+    var g = {}, order = [];
+    evs.forEach(function(e){
+      var s = setOf(e.slug), k = rowName(s, e.slug);
+      if (!g[k]){ g[k] = {name:k, color:colorOf(s), evs:[]}; order.push(k); }
+      g[k].evs.push(e);
+    });
+    return order.map(function(k){ return g[k]; });
+  }
+  function worst(evs){
+    var rank = ['failed','missed','overdue','held','planned','posted'];
+    var best = 'posted';
+    evs.forEach(function(e){ if (rank.indexOf(e.status) < rank.indexOf(best)) best = e.status; });
+    return best;
+  }
+  function countText(evs){
+    var f = 0, r = 0, u = 0;
+    evs.forEach(function(e){ if (e.kind === 'feed') f++; else if (e.kind === 'roundup') u++; else r++; });
+    var t = [];
+    if (f) t.push('피드' + f); if (r) t.push('릴스' + r); if (u) t.push('정리편');
+    return t.join('·');
+  }
+
+  function renderTop(){
+    $('updated').textContent = '마지막 갱신 ' + data.updated + ' KST · 2분마다 다시 읽음';
+    var ch = $('autochips'); ch.textContent = '';
+    var a = data.auto || {};
+    ch.appendChild(el('span', 'chip ' + (a.enabled ? 'on' : 'off'), a.enabled ? '자동 게시 켜짐' : '자동 게시 꺼짐'));
+    if (a.feed_times && a.feed_times.length) ch.appendChild(el('span', 'chip', '피드 ' + a.feed_times.join('·')));
+    if (a.reel_times && a.reel_times.length) ch.appendChild(el('span', 'chip', '릴스 ' + a.reel_times.join('·')));
+    if (a.roundup_time) ch.appendChild(el('span', 'chip', '정리편 ' + a.roundup_time));
+  }
+
+  function renderStats(){
+    var today = kstToday(), mon = view.slice(0,7);
+    var evs = (data.events || []).filter(function(e){ return e.date.slice(0,7) === mon; });
+    var posted = evs.filter(function(e){ return e.status === 'posted'; }).length;
+    var planned = (data.events || []).filter(function(e){ return e.date >= today && e.status === 'planned'; });
+    var lastPlanned = planned.length ? planned[planned.length-1].date : '';
+    var bad = evs.filter(function(e){ return e.status === 'missed' || e.status === 'failed' || e.status === 'overdue'; }).length;
+    var box = $('stats'); box.textContent = '';
+    [[posted, (+mon.slice(5)) + '월 게시(피드·릴스)'], [planned.length, '앞으로 예약된 게시'],
+     [lastPlanned ? (+lastPlanned.slice(5,7)) + '/' + (+lastPlanned.slice(8)) : '—', '예약이 이어지는 날'],
+     [bad, '놓침·실패·결과 기다림']].forEach(function(x){
+      var s = el('div', 'stat'); s.appendChild(el('b', null, String(x[0]))); s.appendChild(el('span', null, x[1])); box.appendChild(s);
+    });
+  }
+
+  function renderCal(){
+    var y = +view.slice(0,4), m = +view.slice(5,7);
+    $('mtitle').textContent = y + '년 ' + m + '월';
+    var cal = $('cal'); cal.textContent = '';
+    ['월','화','수','목','금','토','일'].forEach(function(d, i){ cal.appendChild(el('div', 'dow' + (i === 6 ? ' sun' : ''), d)); });
+    var first = ymd(y, m, 1), start = addDays(first, -((dowOf(first) + 6) % 7));
+    var bd = byDate(), today = kstToday();
+    var off = {}; (data.off_days || []).forEach(function(o){ off[o.date] = o.note; });
+    for (var i = 0; i < 42; i++){
+      var d = addDays(start, i);
+      if (i >= 35 && d.slice(5,7) !== view.slice(5,7)) break;
+      var c = el('button', 'cell');
+      c.type = 'button';
+      if (d.slice(5,7) !== view.slice(5,7)) c.classList.add('out');
+      if (d === today) c.classList.add('today');
+      if (d === sel) c.classList.add('sel');
+      if (dowOf(d) === 0) c.classList.add('sunday');
+      var evs = bd[d] || [];
+      var head = el('div', 'd'); head.appendChild(el('span', null, String(+d.slice(8))));
+      if (evs.length) head.appendChild(el('em', null, evs.length + '건'));
+      else if (off[d]) head.appendChild(el('em', null, '제작 쉼'));
+      c.appendChild(head);
+      groups(evs).slice(0,3).forEach(function(g){
+        var st = worst(g.evs);
+        var b = el('div', 'bar' + (st === 'planned' ? ' ghost' : ''));
+        b.style.setProperty('--c', g.color);
+        b.appendChild(el('span', 't', g.name));
+        b.appendChild(el('span', 'n', countText(g.evs)));
+        b.title = g.name + ' · ' + countText(g.evs) + ' · ' + ST[st].t;
+        c.appendChild(b);
+      });
+      if (evs.length){
+        var dots = el('div', 'dots');
+        evs.slice(0,9).forEach(function(e){ var x = el('i', 'dot'); x.style.setProperty('--s', ST[e.status].c); dots.appendChild(x); });
+        c.appendChild(dots);
+      }
+      c.setAttribute('aria-label', d + ' ' + evs.length + '건');
+      c.addEventListener('click', (function(dd){ return function(){ sel = dd; renderCal(); renderDay(); $('daytitle').scrollIntoView({behavior:'smooth', block:'start'}); }; })(d));
+      cal.appendChild(c);
+    }
+  }
+
+  function itemOf(e){
+    var s = setOf(e.slug);
+    var it = el('div', 'item'); it.style.setProperty('--c', colorOf(s));
+    var tm = el('div', 'tm', e.time || '—'); tm.appendChild(el('span', null, KIND[e.kind] || e.kind)); it.appendChild(tm);
+    var mid = el('div');
+    mid.appendChild(el('div', 'ttl', s.title || e.slug));
+    var meta = el('div', 'meta');
+    meta.appendChild(el('span', null, rowName(s, e.slug) + (s.num ? ' ' + '①②③'.charAt(s.num-1) : '')));
+    var ready = [];
+    if (e.kind === 'feed') ready.push(s.cards ? '카드 ' + s.cards + '장' : '카드 없음');
+    if (e.kind !== 'feed') ready.push(s.reel ? '영상 있음' : '영상 없음');
+    if (s.blog && e.kind === 'feed') ready.push('블로그');
+    if (s.review) ready.push('검수 ' + (s.review === 'PASS' ? '통과' : s.review));
+    if (ready.length) meta.appendChild(el('span', null, ready.join(' · ')));
+    if (e.src === 'manual' && e.status === 'posted') meta.appendChild(el('span', null, '직접 게시'));
+    if (e.link){ var a = el('a', null, '인스타에서 보기'); a.href = e.link; a.target = '_blank'; a.rel = 'noopener'; meta.appendChild(a); }
+    else if (s.posting && e.status !== 'posted'){ var p = el('a', null, '게시용 사진'); p.href = POSTING; p.target = '_blank'; p.rel = 'noopener'; meta.appendChild(p); }
+    if (e.note && e.status !== 'posted') meta.appendChild(el('span', null, e.note));
+    if (e.status === 'posted' && /게시일 모름/.test(e.note || '')) meta.appendChild(el('span', null, '실제 게시일 모름(장부에 적은 날)'));
+    mid.appendChild(meta); it.appendChild(mid);
+    var st = el('span', 'st', ST[e.status].t); st.style.setProperty('--s', ST[e.status].c); it.appendChild(st);
+    return it;
+  }
+
+  function dayBlock(box, d, evs, withHead, fold){
+    if (withHead){
+      var h = el('div', 'dayhead', (+d.slice(5,7)) + '월 ' + (+d.slice(8)) + '일 (' + DOW[dowOf(d)] + ')');
+      var g = groups(evs).map(function(x){ return x.name; }).join(' · ');
+      if (g) h.appendChild(el('small', null, g));
+      if (d === kstToday()) h.appendChild(el('small', null, '오늘'));
+      box.appendChild(h);
+    }
+    if (!evs.length){
+      var off = (data.off_days || []).filter(function(o){ return o.date === d; })[0];
+      box.appendChild(el('div', 'empty', off ? '제작 쉼 — ' + off.note : (dowOf(d) === 0 ? '일요일 — 피드 쉼(여행준비 스토리)' : '예약된 게시 없음')));
+      return;
+    }
+    var done = fold ? evs.filter(function(e){ return e.status === 'posted'; }) : [];
+    if (done.length > 3){
+      var more = el('button', null, '이미 게시됨 ' + done.length + '건 보기');
+      more.type = 'button';
+      more.addEventListener('click', function(){ sel = d; renderCal(); renderDay(); $('daytitle').scrollIntoView({behavior:'smooth', block:'start'}); });
+      box.appendChild(more);
+      evs = evs.filter(function(e){ return e.status !== 'posted'; });
+    }
+    evs.forEach(function(e){ box.appendChild(itemOf(e)); });
+  }
+
+  function renderDay(){
+    var box = $('daylist'); box.textContent = '';
+    if (!sel){ box.appendChild(el('div', 'empty', '달력에서 날짜를 누르세요.')); return; }
+    $('daytitle').textContent = (+sel.slice(5,7)) + '월 ' + (+sel.slice(8)) + '일 (' + DOW[dowOf(sel)] + ')';
+    dayBlock(box, sel, byDate()[sel] || [], false);
+  }
+
+  function renderUpcoming(){
+    var box = $('upcoming'); box.textContent = '';
+    var bd = byDate(), t = kstToday();
+    for (var i = 0; i < 7; i++){ var d = addDays(t, i); dayBlock(box, d, bd[d] || [], true, true); }
+  }
+
+  function li(list, title, sub, color){
+    var x = el('li'); if (color) x.style.setProperty('--c', color);
+    x.appendChild(document.createTextNode(title)); if (sub) x.appendChild(el('small', null, sub)); list.appendChild(x);
+  }
+  function renderLists(){
+    var r = $('ready'); r.textContent = '';
+    (data.ready || []).forEach(function(slug){
+      var s = setOf(slug), bits = [];
+      if (s.cards) bits.push('카드 ' + s.cards + '장'); if (s.reel) bits.push('영상'); if (s.blog) bits.push('블로그');
+      li(r, s.title || slug, rowName(s, slug) + (bits.length ? ' · ' + bits.join(' · ') : ''), colorOf(s));
+    });
+    if (!r.children.length) r.appendChild(el('li', null, '없음 — 만든 세트는 모두 날짜가 잡혀 있습니다'));
+    var n = $('nextrows'); n.textContent = '';
+    (data.next || []).forEach(function(x){ li(n, (x.order ? x.order + '. ' : '') + x.food + (x.round ? ' ' + x.round + '탄' : ''), [x.status, x.note].filter(Boolean).join(' · '), 'var(--line)'); });
+    if (!n.children.length) n.appendChild(el('li', null, '적힌 순서 없음'));
+    var t = $('todo'); t.textContent = '';
+    (data.todo || []).slice().reverse().forEach(function(x){ li(t, x.todo || x.what, x.what + ' · ' + x.at, 'var(--warn)'); });
+    if (!t.children.length) t.appendChild(el('li', null, '없음'));
+    var w = $('warnings'); w.textContent = '';
+    (data.warnings || []).forEach(function(x){ li(w, x, '', null); });
+    if (!w.children.length) w.appendChild(el('li', null, '없음'));
+    $('foot').textContent = '재료: 자동 게시 예약 줄 · 게시 장부 · 세트 폴더 · 게시용 사진 페이지(' + (data.posting_updated || '—') + ') · 커밋 ' + (data.commit || '').split(' ')[0];
+  }
+
+  function renderAll(){ renderTop(); renderStats(); renderCal(); renderDay(); renderUpcoming(); renderLists(); }
+
+  function load(){
+    var urls = [RAW + '?t=' + Date.now(), 'data.json?t=' + Date.now()];
+    (function tryNext(i){
+      if (i >= urls.length){ var e = $('err'); e.style.display = 'block'; e.textContent = '데이터를 못 읽었습니다. 잠시 뒤 새로고침해 주세요.'; return; }
+      fetch(urls[i], {cache:'no-store'}).then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function(j){
+          if (data && j.updated <= data.updated) return;
+          data = j; $('err').style.display = 'none';
+          if (!view) view = kstToday().slice(0,7) + '-01';
+          if (!sel) sel = kstToday();
+          renderAll();
+        }).catch(function(){ tryNext(i+1); });
+    })(0);
+  }
+  function shift(n){ var y = +view.slice(0,4), m = +view.slice(5,7) - 1 + n; y += Math.floor(m/12); m = ((m%12)+12)%12 + 1; view = ymd(y, m, 1); renderStats(); renderCal(); }
+  $('prev').addEventListener('click', function(){ shift(-1); });
+  $('next').addEventListener('click', function(){ shift(1); });
+  $('thism').addEventListener('click', function(){ view = kstToday().slice(0,7) + '-01'; sel = kstToday(); renderStats(); renderCal(); renderDay(); });
+  load();
+  setInterval(load, 120000);
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) load(); });
+})();
+</script>
+</body>
+</html>
