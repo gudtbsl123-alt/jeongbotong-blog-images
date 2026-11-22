@@ -1,0 +1,51 @@
+name: 인스타 토큰 연장
+
+on:
+  schedule:
+    - cron: "23 18 * * 0"   # 매주 월요일 03:23 (한국 시간)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: autopost
+
+      - name: GH_PAT 확인 (없으면 연장하지 않음)
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::GH_PAT Secret이 없어 연장하지 않았습니다. autopost/README.md '3. 토큰 자동 연장'을 보세요."
+            exit 1
+          fi
+          gh secret list --repo "$GITHUB_REPOSITORY" > /dev/null || {
+            echo "::error::GH_PAT로 Secret을 바꿀 수 없습니다. 토큰 권한(Secrets: Read and write)과 저장소 선택을 확인하세요."
+            exit 1
+          }
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests
+
+      - name: 토큰 연장
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: python autopost/ig/refresh_token.py --out "$RUNNER_TEMP/ig_token.txt"
+
+      - name: 새 토큰을 Secret에 저장
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: gh secret set IG_ACCESS_TOKEN --repo "$GITHUB_REPOSITORY" < "$RUNNER_TEMP/ig_token.txt"
+
+      - name: 임시 파일 지우기
+        if: always()
+        run: rm -f "$RUNNER_TEMP/ig_token.txt"

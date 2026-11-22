@@ -1,0 +1,62 @@
+name: 인스타 게시 파일 공개 (Pages)
+
+# 메타가 사진·영상을 내려받아 갈 공개 주소를 만듭니다.
+# 저장소 전체(1GB 넘음) 대신 아직 게시 안 된 대기열의 파일만 GitHub Pages에 올립니다.
+# 최초 한 번: 저장소 Settings → Pages → Source: GitHub Actions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "autopost/ig_queue/**"
+      - "posting/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: okawari-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      posts: ${{ steps.site.outputs.posts }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: autopost
+
+      - name: 필요한 폴더만 받기
+        id: src
+        run: python3 autopost/ig/ig_publish.py sources
+
+      - if: steps.src.outputs.dirs != ''
+        env:
+          DIRS: ${{ steps.src.outputs.dirs }}
+        run: git sparse-checkout add $DIRS
+
+      - name: 게시 대기 파일 모으기
+        id: site
+        run: python3 autopost/ig/ig_publish.py site --out _site
+
+      - if: steps.site.outputs.posts != '0'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.posts != '0'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

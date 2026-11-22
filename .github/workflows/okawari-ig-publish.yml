@@ -1,0 +1,95 @@
+name: 인스타 자동 게시
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"   # 30분마다 (정각을 피해 7분·37분)
+  workflow_dispatch:
+    inputs:
+      folder:
+        description: "지금 바로 올릴 폴더 이름 (비우면 예약 시각이 된 것만)"
+        required: false
+        default: ""
+      dry_run:
+        description: "미리보기만 (실제로 올리지 않음)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: okawari-ig-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # 저장소가 1GB가 넘어서 autopost 폴더만 먼저 받음
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: autopost
+
+      - name: 올릴 차례 확인
+        id: due
+        env:
+          FOLDER: ${{ inputs.folder }}
+        run: |
+          if [ -n "$FOLDER" ]; then
+            python3 autopost/ig/ig_publish.py sources --folder "$FOLDER"
+          else
+            python3 autopost/ig/ig_publish.py sources --due
+          fi
+
+      - name: 필요한 사진·영상만 받기
+        if: steps.due.outputs.count != '0'
+        env:
+          DIRS: ${{ steps.due.outputs.dirs }}
+        run: |
+          if [ -n "$DIRS" ]; then git sparse-checkout add $DIRS; fi
+
+      - uses: actions/setup-python@v5
+        if: steps.due.outputs.count != '0'
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: autopost/ig/requirements.txt
+
+      - if: steps.due.outputs.count != '0'
+        run: pip install -r autopost/ig/requirements.txt
+
+      - name: 게시
+        if: steps.due.outputs.count != '0'
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
+          FOLDER: ${{ inputs.folder }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          ARGS=""
+          if [ "$DRY_RUN" = "true" ]; then ARGS="--dry-run"; fi
+          if [ -n "$FOLDER" ]; then
+            python autopost/ig/ig_publish.py now "$FOLDER" $ARGS
+          else
+            python autopost/ig/ig_publish.py run $ARGS
+          fi
+
+      - name: 게시 기록 저장 (published.json / error.json)
+        if: always() && steps.due.outputs.count != '0'
+        run: |
+          git config user.name "okawari-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A autopost/ig_queue
+          if git diff --cached --quiet; then
+            echo "바뀐 기록 없음"
+            exit 0
+          fi
+          git commit -m "인스타 게시 기록"
+          for i in 1 2 3; do
+            git pull --rebase && git push && exit 0
+            sleep 5
+          done
+          exit 1
